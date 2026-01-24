@@ -1,11 +1,12 @@
 import React from "react";
 import AuthDetails from "../components/auth/AuthDetails";
+import Onboarding from "../components/onboarding/Onboarding";
 
 const OnboardingPage = () => {
   return (
         <div>
             <h1>Заповнення профілю</h1>
-            <p>Тут буде ваша форма з іменем, віком та фото.</p>
+            <Onboarding />
             <AuthDetails />
         </div>
     );
