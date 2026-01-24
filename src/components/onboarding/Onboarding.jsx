@@ -1,122 +1,79 @@
-import React, { useState } from "react";
-import { db, auth } from "../../services/firebase";
+import React, { useState, useEffect } from "react";
+import { db } from "../../services/firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { getZodiacSign } from "../../utils/getZodiacSign";
+import { useAuth } from "../../context/AuthContext";
 
 const Onboarding = () => {
-    const [firstName, setFirstName] = useState("");
-    const [lastName, setLastName] = useState("");
-    const [birthDate, setBirthDate] = useState("");
-    const [birthTime, setBirthTime] = useState("");
-    const [city, setCity] = useState("");
-    const [bio, setBio] = useState("");
-    const [telegram, setTelegram] = useState("");
-    
-    const [error, setError] = useState("");
+    const { user, userData, refreshUserData } = useAuth();
     const navigate = useNavigate();
+
+    // Ініціалізуємо стейти даними з контексту (якщо вони там вже є)
+    const [firstName, setFirstName] = useState(userData?.firstName || "");
+    const [lastName, setLastName] = useState(userData?.lastName || "");
+    const [birthDate, setBirthDate] = useState(userData?.birthDate || "");
+    const [birthTime, setBirthTime] = useState(userData?.birthTime || "");
+    const [city, setCity] = useState(userData?.city || "");
+    const [bio, setBio] = useState(userData?.bio || "");
+    const [telegram, setTelegram] = useState(userData?.telegram || "");
+    const [error, setError] = useState("");
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const user = auth.currentUser;
 
         if (user) {
-            // Вираховуємо знак зодіаку перед відправкою
             const zodiac = getZodiacSign(birthDate);
             
             try {
-                // Зберігаємо всі дані окремими полями
                 await setDoc(doc(db, "users", user.uid), {
-                    firstName: firstName,
-                    lastName: lastName,
-                    birthDate: birthDate,
-                    birthTime: birthTime,
-                    city: city,
-                    bio: bio,
-                    telegram: telegram,
+                    firstName,
+                    lastName,
+                    birthDate,
+                    birthTime,
+                    city,
+                    bio,
+                    telegram,
                     zodiacSign: zodiac,
                     uid: user.uid,
                     email: user.email,
                     setupComplete: true
                 });
                 
-                console.log("Профіль успішно створено");
-                window.location.href = "/home";
+                // КЛЮЧОВИЙ МОМЕНТ: оновлюємо дані в контексті
+                await refreshUserData(user.uid);
+                
+                console.log("Дані оновлено в Context та Firestore");
+                navigate("/home");
             } catch (error) {
-                console.error("Помилка запису в Firestore:", error);
-                setError("Не вдалося зберегти дані. Спробуйте ще раз.");
+                console.error("Помилка:", error);
+                setError("Не вдалося зберегти дані.");
             }
-        } else {
-            setError("Користувач не авторизований");
         }
     };
 
     return (
-        <div>
-            <form onSubmit={handleSubmit}>
+        <div style={{ padding: "20px", maxWidth: "400px", margin: "0 auto" }}>
+            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 <h2>Налаштування профілю</h2>
                 
-                <input 
-                    placeholder="Ім'я" 
-                    value={firstName} 
-                    onChange={(e) => setFirstName(e.target.value)} 
-                    required 
-                />
+                <input placeholder="Ім'я" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+                <input placeholder="Прізвище" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+                <input placeholder="Місто" value={city} onChange={(e) => setCity(e.target.value)} required />
+                <input placeholder="Telegram @user" value={telegram} onChange={(e) => setTelegram(e.target.value)} required />
+                <textarea placeholder="Про себе" value={bio} onChange={(e) => setBio(e.target.value)} rows="4" />
                 
-                <input 
-                    placeholder="Прізвище" 
-                    value={lastName} 
-                    onChange={(e) => setLastName(e.target.value)} 
-                    required 
-                />
+                <label>Дата народження:</label>
+                <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required />
 
-                <input 
-                    placeholder="Місто" 
-                    value={city} 
-                    onChange={(e) => setCity(e.target.value)} 
-                    required 
-                />
-
-                <input 
-                    placeholder="Telegram username (напр. @user)" 
-                    value={telegram} 
-                    onChange={(e) => setTelegram(e.target.value)} 
-                    required 
-                />
-
-                <textarea 
-                    placeholder="Про себе (хобі, інтереси)" 
-                    value={bio} 
-                    onChange={(e) => setBio(e.target.value)} 
-                    rows="4"
-                />
+                {birthDate && <p>Знак: <strong>{getZodiacSign(birthDate)}</strong></p>}
                 
-                <div>
-                    <label>Дата народження:</label>
-                    <input 
-                        type="date" 
-                        value={birthDate} 
-                        onChange={(e) => setBirthDate(e.target.value)} 
-                        required 
-                    />
-                </div>
+                <label>Час народження:</label>
+                <input type="time" value={birthTime} onChange={(e) => setBirthTime(e.target.value)} />
 
-                {birthDate && (
-                    <p>
-                        Ваш знак зодіаку: <strong>{getZodiacSign(birthDate)}</strong>
-                    </p>
-                )}
-                
-                <div>
-                    <label>Час народження (необов'язково):</label>
-                    <input 
-                        type="time" 
-                        value={birthTime} 
-                        onChange={(e) => setBirthTime(e.target.value)} 
-                    />
-                </div>
-
-                <button type="submit">Завершити реєстрацію</button>
+                <button type="submit" style={{ padding: "10px", background: "#007bff", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}>
+                    Зберегти дані
+                </button>
                 
                 {error && <p style={{ color: "red" }}>{error}</p>}
             </form>

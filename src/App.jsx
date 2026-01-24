@@ -1,8 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth, db } from "./services/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 
 import LoginPage from "./pages/LoginPage";
 import SignUpPage from "./pages/SignUpPage";
@@ -11,80 +9,67 @@ import HomePage from "./pages/HomePage";
 import MatchesPage from "./pages/MatchesPage";
 import ProfilePage from "./pages/ProfilePage";
 
-function App() {
-  const [user, setUser] = useState(null);
-  const [isProfileComplete, setIsProfileComplete] = useState(false);
-  const [loading, setLoading] = useState(true);
+// Створюємо окремий компонент для маршрутів, щоб використовувати useAuth всередині Router
+const AppRoutes = () => {
+  const { user, userData, isProfileComplete, loading } = useAuth();
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setLoading(true); 
-      setUser(currentUser);
+  // 1. Поки йде початкове завантаження Auth + Firestore — чекаємо
+  if (loading) return <div>Завантаження профілю...</div>;
 
-      if (currentUser) {
-        try {
-          const docRef = doc(db, "users", currentUser.uid);
-          const docSnap = await getDoc(docRef);
-
-          if (docSnap.exists() && docSnap.data().setupComplete) {
-            setIsProfileComplete(true);
-          } else {
-            setIsProfileComplete(false);
-          }
-        } catch (error) {
-          console.error("Помилка при отриманні профілю:", error);
-          setIsProfileComplete(false);
-        }
-      } else {
-        setIsProfileComplete(false);
-      }
-    
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  if (loading) return <div>Завантаження...</div>;
+  // 2. Якщо користувач залогінився, але дані профілю (userData) ще не завантажились 
+  // (це буває в момент переходу), теж чекаємо, щоб не спрацював помилковий Navigate
+  if (user && !userData && !loading) return <div>Синхронізація даних...</div>;
 
   return (
-    <Router>
-      <Routes>
-        {/* Публічні маршрути */}
-        <Route 
-          path="/login" 
-          element={!user ? <LoginPage /> : (isProfileComplete ? <Navigate to="/home" /> : <Navigate to="/onboarding" />)} 
-        />
-        <Route 
-          path="/signup" 
-          element={!user ? <SignUpPage /> : <Navigate to="/onboarding" />} 
-        />
+    <Routes>
+      {/* ПУБЛІЧНІ МАРШРУТИ */}
+      <Route 
+        path="/login" 
+        element={!user ? <LoginPage /> : (isProfileComplete ? <Navigate to="/home" /> : <Navigate to="/onboarding" />)} 
+      />
+      <Route 
+        path="/signup" 
+        element={!user ? <SignUpPage /> : <Navigate to="/onboarding" />} 
+      />
 
-        {/* Приватні маршрути */}
-        <Route 
-          path="/onboarding" 
-          element={user ? <OnboardingPage /> : <Navigate to="/login" />} 
-        />
-        
-        <Route 
-          path="/home" 
-          element={user && isProfileComplete ? <HomePage /> : <Navigate to="/onboarding" />} 
-        />
+      {/* ПРИВАТНІ МАРШРУТИ */}
+      <Route 
+        path="/onboarding" 
+        element={user ? <OnboardingPage /> : <Navigate to="/login" />} 
+      />
+      
+      {/* Додаємо чітку логіку: пускати на Home тільки якщо профіль ТОЧНО заповнений */}
+      <Route 
+        path="/home" 
+        element={user && isProfileComplete ? <HomePage /> : <Navigate to="/onboarding" />} 
+      />
+      
+      <Route 
+        path="/matches" 
+        element={user && isProfileComplete ? <MatchesPage /> : <Navigate to="/onboarding" />} 
+      />
+      
+      <Route 
+        path="/profile" 
+        element={user && isProfileComplete ? <ProfilePage /> : <Navigate to="/onboarding" />} 
+      />
 
-        <Route 
-          path="/matches" 
-          element={user && isProfileComplete ? <MatchesPage /> : <Navigate to="/onboarding" />} />
+      {/* Глобальний редирект */}
+      <Route 
+        path="/" 
+        element={!user ? <Navigate to="/login" /> : (isProfileComplete ? <Navigate to="/home" /> : <Navigate to="/onboarding" />)} 
+      />
+    </Routes>
+  );
+};
 
-        <Route 
-          path="/profile" 
-          element={user && isProfileComplete ? <ProfilePage /> : <Navigate to="/onboarding" />} />
-
-        {/* Головна точка входу */}
-        <Route path="/" element={
-          !user ? <Navigate to="/login" /> : (isProfileComplete ? <Navigate to="/home" /> : <Navigate to="/onboarding" />)
-        } />
-      </Routes>
-    </Router>
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <AppRoutes />
+      </Router>
+    </AuthProvider>
   );
 }
 

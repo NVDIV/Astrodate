@@ -7,7 +7,6 @@ const OnboardingPage = () => {
         <div>
             <h1>Заповнення профілю</h1>
             <Onboarding />
-            <AuthDetails />
         </div>
     );
 };
