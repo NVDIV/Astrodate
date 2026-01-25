@@ -11,11 +11,18 @@ import ProfilePage from "./pages/ProfilePage";
 
 
 const AppRoutes = () => {
-  const { user, userData, isProfileComplete, loading } = useAuth();
+  const { user, isProfileComplete, loading } = useAuth();
 
-  if (loading) return <div>Завантаження профілю...</div>;
-
-  if (user && !userData && !loading) return <div>Синхронізація даних...</div>;
+  // Поки ми не отримали відповідь від ОБОХ сервісів, показуємо завантаження
+  if (loading) {
+    return (
+      <div className="auth-page">
+        <div className="auth-card">
+          <p>Синхронізація з зірками...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Routes>
@@ -35,27 +42,18 @@ const AppRoutes = () => {
         element={user ? <OnboardingPage /> : <Navigate to="/login" />} 
       />
       
-      {/* Додаємо чітку логіку: пускати на Home тільки якщо профіль ТОЧНО заповнений */}
+      {/* Тепер тут не буде помилкових редиректів, бо ми точно знаємо статус isProfileComplete */}
       <Route 
         path="/home" 
         element={user && isProfileComplete ? <HomePage /> : <Navigate to="/onboarding" />} 
       />
       
-      <Route 
-        path="/matches" 
-        element={user && isProfileComplete ? <MatchesPage /> : <Navigate to="/onboarding" />} 
-      />
-      
-      <Route 
-        path="/profile" 
-        element={user && isProfileComplete ? <ProfilePage /> : <Navigate to="/onboarding" />} 
-      />
+      <Route path="/matches" element={user && isProfileComplete ? <MatchesPage /> : <Navigate to="/onboarding" />} />
+      <Route path="/profile" element={user && isProfileComplete ? <ProfilePage /> : <Navigate to="/onboarding" />} />
 
-      {/* Глобальний редирект */}
-      <Route 
-        path="/" 
-        element={!user ? <Navigate to="/login" /> : (isProfileComplete ? <Navigate to="/home" /> : <Navigate to="/onboarding" />)} 
-      />
+      <Route path="/" element={
+        !user ? <Navigate to="/login" /> : (isProfileComplete ? <Navigate to="/home" /> : <Navigate to="/onboarding" />)
+      } />
     </Routes>
   );
 };
