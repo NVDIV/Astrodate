@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { db } from "../../services/firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { getZodiacSign } from "../../utils/getZodiacSign";
 import { useAuth } from "../../context/AuthContext";
+import "../../styles/AuthLayout.css";
 
 const Onboarding = () => {
     const { user, userData, refreshUserData } = useAuth();
@@ -53,9 +54,12 @@ const Onboarding = () => {
     };
 
     return (
-        <div style={{ padding: "20px", maxWidth: "400px", margin: "0 auto" }}>
-            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                <h2>Налаштування профілю</h2>
+        <div className="auth-page">
+            <div className="auth-card">
+                <h2>✨ Твій зодіакальний профіль</h2>
+                <p style={{color: "var(--gray)", marginBottom: "20px"}}>Крок до знайомства за зірками</p>
+
+                <form onSubmit={handleSubmit} className="onboarding-form">
                 
                 <input placeholder="Ім'я" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
                 <input placeholder="Прізвище" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
@@ -63,20 +67,30 @@ const Onboarding = () => {
                 <input placeholder="Telegram @user" value={telegram} onChange={(e) => setTelegram(e.target.value)} required />
                 <textarea placeholder="Про себе" value={bio} onChange={(e) => setBio(e.target.value)} rows="4" />
                 
-                <label>Дата народження:</label>
-                <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required />
 
-                {birthDate && <p>Знак: <strong>{getZodiacSign(birthDate)}</strong></p>}
-                
-                <label>Час народження:</label>
-                <input type="time" value={birthTime} onChange={(e) => setBirthTime(e.target.value)} />
+                <div className="input-group">
+                    <label>Дата народження</label>
+                    <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required />
+                </div>
 
-                <button type="submit" style={{ padding: "10px", background: "#007bff", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}>
+                <div className="input-group">
+                    <label>Час народження</label>
+                    <input type="time" value={birthTime} onChange={(e) => setBirthTime(e.target.value)} />
+                </div>
+
+                {birthDate && (
+                    <div className="zodiac-badge">
+                        ♋ {getZodiacSign(birthDate)}
+                    </div>
+                )}
+
+                <button type="submit" className="primary-btn">
                     Зберегти дані
                 </button>
                 
-                {error && <p style={{ color: "red" }}>{error}</p>}
+                {error && <p style={{ color: "red", marginTop: "10px", fontSize: "14px" }}>{error}</p>}
             </form>
+            </div>
         </div>
     );
 };

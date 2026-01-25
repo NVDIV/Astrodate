@@ -1,0 +1,32 @@
+/* src/styles/AuthLayout.css */
+.auth-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.auth-card {
+  background: var(--white);
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, var(--primary), #483d8b);
+  color: white;
+  padding: 14px;
+  width: 100%;
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+.primary-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}

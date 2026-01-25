@@ -9,15 +9,12 @@ import HomePage from "./pages/HomePage";
 import MatchesPage from "./pages/MatchesPage";
 import ProfilePage from "./pages/ProfilePage";
 
-// Створюємо окремий компонент для маршрутів, щоб використовувати useAuth всередині Router
+
 const AppRoutes = () => {
   const { user, userData, isProfileComplete, loading } = useAuth();
 
-  // 1. Поки йде початкове завантаження Auth + Firestore — чекаємо
   if (loading) return <div>Завантаження профілю...</div>;
 
-  // 2. Якщо користувач залогінився, але дані профілю (userData) ще не завантажились 
-  // (це буває в момент переходу), теж чекаємо, щоб не спрацював помилковий Navigate
   if (user && !userData && !loading) return <div>Синхронізація даних...</div>;
 
   return (
