@@ -1,0 +1,102 @@
+.feed-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: calc(100vh - 120px);
+}
+
+.card-container {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  height: 600px; /* Фіксована висота контейнера */
+  display: flex;
+  justify-content: center;
+}
+
+.tinder-card {
+  position: absolute;
+  width: 100%;
+  max-width: 360px;
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  overflow: hidden;
+  touch-action: none; /* Важливо для мобільних свайпів */
+}
+
+.card-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.card-image-box {
+  position: relative;
+  height: 400px;
+}
+
+.card-image-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card-info-overlay {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  padding: 20px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.8));
+  color: white;
+}
+
+.card-details {
+  padding: 15px;
+  background: white;
+}
+
+.bio-scroll-area {
+  height: 50px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+
+.bio-text {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+.feed-actions {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+}
+
+.circle-btn {
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  border: 1px solid #f0f0f0;
+  background: white;
+  font-size: 22px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  transition: transform 0.1s;
+}
+
+.circle-btn:active {
+  transform: scale(0.9);
+}
+
+.like-btn { color: #4caf50; }
+.nope-btn { color: #ff4b2b; }
+
+.keyboard-hint {
+  margin-top: 15px;
+  color: #bbb;
+  font-size: 12px;
+}
