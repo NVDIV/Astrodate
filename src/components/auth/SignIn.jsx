@@ -17,14 +17,14 @@ const SignIn = () => {
                 setPassword("");
             })
             .catch((error) => {
-                setError("Не вдалося знайти ваш акаунт");
+                setError("No such account.");
             });
     }
 
     return (
         <div className="auth-page">
             <div className="auth-card">
-                <h2>✨ З поверненням</h2>
+                <h2>З поверненням!</h2>
                 <p style={{ color: "var(--gray)", marginBottom: "20px" }}>Увійдіть, щоб побачити свої зорі</p>
                 <form onSubmit={logIn}>
                     <input 

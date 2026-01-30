@@ -4,13 +4,13 @@ import { Link } from "react-router-dom";
 
 const LoginPage = () => {
   return (
-        <div>
-            <SignIn />
-            <p>
-                Ще не з нами? <Link to="/signup">Зареєструватися</Link>
-            </p>
-        </div>
-    );
+    <div className="auth-page">
+      <SignIn />
+      <p className="auth-footer-text">
+        Ще не з нами? <Link to="/signup">Зареєструватися</Link>
+      </p>
+    </div>
+  );
 };
 
 export default LoginPage;

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { db } from "../services/firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/layout/NavBar";
 import Feed from "../components/home/Feed";
-import { getSortedProfiles } from "../utils/compatibility"; // Наш новий файл
+import { getSortedProfiles } from "../utils/compatibility";
 
 const HomePage = () => {
   const { user, userData } = useAuth();
@@ -13,16 +13,28 @@ const HomePage = () => {
 
   useEffect(() => {
     const fetchAndFilter = async () => {
+      if (!user || !userData) return;
+      
       setLoading(true);
       try {
-        const querySnapshot = await getDocs(collection(db, "users"));
-        const allUsers = querySnapshot.docs.map(doc => doc.data());
+        // 1. Отримуємо список тих, кого юзер вже лайкав
+        const likesQuery = query(collection(db, "likes"), where("from", "==", user.uid));
+        const likesSnapshot = await getDocs(likesQuery);
+        const viewedUserIds = likesSnapshot.docs.map(doc => doc.data().to);
 
-        // Використовуємо наш алгоритм для фільтрації та сортування за сумісністю
-        if (userData) {
-          const sorted = getSortedProfiles(allUsers, userData);
-          setProfiles(sorted);
-        }
+        // 2. Отримуємо ВСІХ користувачів
+        const usersSnapshot = await getDocs(collection(db, "users"));
+        const allUsers = usersSnapshot.docs.map(doc => doc.data());
+
+        // 3. Фільтруємо: прибираємо себе + вже переглянутих
+        const availableUsers = allUsers.filter(u => 
+          u.uid !== user.uid && !viewedUserIds.includes(u.uid)
+        );
+
+        // 4. Сортуємо за зірками та статтю
+        const sorted = getSortedProfiles(availableUsers, userData);
+        setProfiles(sorted);
+        
       } catch (error) {
         console.error("Помилка при завантаженні профілів:", error);
       } finally {
@@ -30,9 +42,7 @@ const HomePage = () => {
       }
     };
 
-    if (user && userData) {
-      fetchAndFilter();
-    }
+    fetchAndFilter();
   }, [user, userData]);
 
   return (
@@ -44,10 +54,9 @@ const HomePage = () => {
         flexDirection: "column", 
         alignItems: "center",
         minHeight: "100vh",
-        backgroundColor: "var(--bg)" 
       }}>
         {loading ? (
-          <div className="loader">Зчитуємо зірки... 🌌</div>
+          <div className="loader" style={{marginTop: "50px"}}>Зчитуємо зірки... 🌌</div>
         ) : (
           <Feed profiles={profiles} />
         )}

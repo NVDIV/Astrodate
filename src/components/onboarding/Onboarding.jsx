@@ -10,12 +10,11 @@ const Onboarding = () => {
     const { user, userData, refreshUserData } = useAuth();
     const navigate = useNavigate();
 
-    // Ініціалізуємо стейти даними з контексту (якщо вони там вже є)
     const [firstName, setFirstName] = useState(userData?.firstName || "");
     const [lastName, setLastName] = useState(userData?.lastName || "");
-    // const [gender, setGender] = useState(userData?.gender || "");
+    const [gender, setGender] = useState(userData?.gender || ""); 
+    const [preference, setPreference] = useState(userData?.preference || ""); 
     const [birthDate, setBirthDate] = useState(userData?.birthDate || "");
-    const [birthTime, setBirthTime] = useState(userData?.birthTime || "");
     const [city, setCity] = useState(userData?.city || "");
     const [bio, setBio] = useState(userData?.bio || "");
     const [telegram, setTelegram] = useState(userData?.telegram || "");
@@ -24,18 +23,41 @@ const Onboarding = () => {
     const [isUploading, setIsUploading] = useState(false); 
     const [error, setError] = useState("");
 
+    const validateAge = (date) => {
+        const today = new Date();
+        const birth = new Date(date);
+        let age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+        return age >= 18;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!user) return;
+        if (!gender || !preference) {
+            setError("Будь ласка, оберіть стать та преференції");
+            return;
+        }
+        if (!validateAge(birthDate)) {
+            setError("Сервіс доступний лише для осіб старше 18 років");
+            return;
+        }
 
         try {
-            const photoURL = await uploadToCloudinary();
+            let photoURL = userData?.photoURL || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+            
+            if (image) {
+                photoURL = await uploadToCloudinary();
+            }
+
             const zodiac = getZodiacSign(birthDate);
 
             await setDoc(doc(db, "users", user.uid), {
                 firstName,
                 lastName,
-                // gender,
+                gender,
+                preference,
                 birthDate,
                 city,
                 bio,
@@ -57,13 +79,11 @@ const Onboarding = () => {
         const file = e.target.files[0];
         if (file) {
             setImage(file);
-            setPreview(URL.createObjectURL(file)); // Створює тимчасове посилання для показу на екрані
+            setPreview(URL.createObjectURL(file));
         }
     };
 
     const uploadToCloudinary = async () => {
-        if (!image) return userData?.photoURL || ""; // Якщо фото не міняли, лишаємо старе
-
         const formData = new FormData();
         formData.append("file", image);
         formData.append("upload_preset", "ml_default");
@@ -76,9 +96,8 @@ const Onboarding = () => {
             );
             const data = await response.json();
             setIsUploading(false);
-            return data.secure_url; // Це і є пряме посилання на фото
+            return data.secure_url;
         } catch (err) {
-            console.error("Cloudinary error:", err);
             setIsUploading(false);
             return "";
         }
@@ -86,70 +105,75 @@ const Onboarding = () => {
 
     return (
         <div className="auth-page">
-            <div className="auth-card">
-                <h2>✨ Твій зодіакальний профіль</h2>
-                <p style={{color: "var(--gray)", marginBottom: "20px"}}>Крок до знайомства за зірками</p>
+            <div className="auth-card onboarding-card">
+                <h2>✨ Твій профіль</h2>
 
                 <form onSubmit={handleSubmit} className="onboarding-form">
-
-                {/* Блок Фото */}
-                <div className="photo-upload-container">
-                    <label>Фото профілю</label>
-                    <div className="photo-preview" onClick={() => document.getElementById('fileInput').click()}>
-                        {preview ? (
-                            <img src={preview} alt="Profile" />
-                        ) : (
-                            <span>Натисніть, щоб додати фото</span>
-                        )}
+                    
+                    <div className="photo-upload-section">
+                        <div className={`photo-preview portrait ${!preview ? 'placeholder' : ''}`} 
+                             onClick={() => document.getElementById('fileInput').click()}>
+                            {preview ? (
+                                <img src={preview} alt="Profile" />
+                            ) : (
+                                <div className="placeholder-content">
+                                    <span className="plus-icon">+</span>
+                                    <span>Завантажити фото</span>
+                                </div>
+                            )}
+                        </div>
+                        <input id="fileInput" type="file" accept="image/*" onChange={handleImageChange} style={{ display: "none" }} />
                     </div>
-                    <input 
-                        id="fileInput"
-                        type="file" 
-                        accept="image/*" 
-                        onChange={handleImageChange} 
-                        style={{ display: "none" }} 
-                    />
-                </div>
 
-                {/* <label style={{ display: "block", textAlign: "left", marginTop: "10px" }}>Ваша стать:</label>
-                <div className="gender-selection">
-                    <div className={`gender-option ${gender === "male" ? "selected" : ""}`} onClick={() => setGender("male")}>
-                        Чоловік
+                    <div className="input-row">
+                        <input placeholder="Ім'я *" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+                        <input placeholder="Прізвище *" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
                     </div>
-                    <div className={`gender-option ${gender === "female" ? "selected" : ""}`} onClick={() => setGender("female")}>
-                        Жінка
+
+                    <input placeholder="Місто *" value={city} onChange={(e) => setCity(e.target.value)} required />
+
+                    <textarea placeholder="Про себе (кілька слів для анкети)" value={bio} onChange={(e) => setBio(e.target.value)} rows="3" />
+                    
+                    <div className="input-group">
+                        <input placeholder="Telegram @username *" value={telegram} onChange={(e) => setTelegram(e.target.value)} required />
+                        <small className="input-note">Профіль має бути відкритим. Якщо немає ніка — створіть його в налаштуваннях Telegram.</small>
                     </div>
-                </div> */}
 
-                <input placeholder="Ім'я" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
-                <input placeholder="Прізвище" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
-                <input placeholder="Місто" value={city} onChange={(e) => setCity(e.target.value)} required />
-                <input placeholder="Telegram @user" value={telegram} onChange={(e) => setTelegram(e.target.value)} required />
-
-                <textarea placeholder="Про себе" value={bio} onChange={(e) => setBio(e.target.value)} rows="4" />
-
-                <div className="input-group">
-                    <label>Дата народження</label>
-                    <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required />
-                </div>
-
-                <div className="input-group">
-                    <label>Час народження</label>
-                    <input type="time" value={birthTime} onChange={(e) => setBirthTime(e.target.value)} />
-                </div>
-
-                {birthDate && (
-                    <div className="zodiac-badge">
-                        ♋ {getZodiacSign(birthDate)}
+                    <label className="section-label">Ваша стать *</label>
+                    <div className="gender-selection">
+                        {['male', 'female', 'other'].map(g => (
+                            <div key={g} className={`gender-option ${gender === g ? "selected" : ""}`} onClick={() => setGender(g)}>
+                                {g === 'male' ? 'Чоловік' : g === 'female' ? 'Жінка' : 'Інше'}
+                            </div>
+                        ))}
                     </div>
-                )}
 
-                <button type="submit" className="primary-btn">
-                    Зберегти дані
-                </button>
-                
-                {error && <p style={{ color: "red", marginTop: "10px", fontSize: "14px" }}>{error}</p>}
-            </form>
+                    <label className="section-label">Кого ви шукаєте? *</label>
+                    <div className="gender-selection">
+                        {['male', 'female', 'all'].map(p => (
+                            <div key={p} className={`gender-option ${preference === p ? "selected" : ""}`} onClick={() => setPreference(p)}>
+                                {p === 'male' ? 'Чоловіків' : p === 'female' ? 'Жінок' : 'Всіх'}
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="input-group" style={{textAlign: 'left'}}>
+                        <label className="section-label" style={{margin: '10px 0'}}>Дата народження *</label>
+                        <input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required />
+                    </div>
+
+                    {birthDate && (
+                        <div className="zodiac-badge-display">
+                            ✨ Ваш знак: <span>{getZodiacSign(birthDate)}</span>
+                        </div>
+                    )}
+
+                    <button type="submit" className="primary-btn" disabled={isUploading} style={{marginTop: '20px'}}>
+                        {isUploading ? "Завантаження..." : "Зберегти"}
+                    </button>
+                    
+                    {error && <p className="error-msg">{error}</p>}
+                </form>
             </div>
         </div>
     );

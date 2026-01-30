@@ -12,7 +12,7 @@ const SignUp = () => {
     function register(e) {
         e.preventDefault();
         if (copyPassword !== password) {
-            setError("Паролі не збігаються");
+            setError("Passwords don't match");
             return;
         }
 

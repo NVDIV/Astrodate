@@ -4,6 +4,7 @@ import { auth } from "../../services/firebase"
 
 const AuthDetails = () => {
     const [authUser, setAuthUser]=useState(null)
+    
     useEffect(() => {
         const listen = onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -19,20 +20,20 @@ const AuthDetails = () => {
 
     function userSignOut() {
         signOut(auth)
-        .then(() => console.log("succes"))
+        .then(() => console.log("success"))
         .catch((e) => console.log(e));
     }
     
     return (
-        <div>
+        <div className="auth-details-container">
             {authUser ? (
                 <div>
-                    <p>{ `Signed in as ${authUser.email}`}</p>
-                    <button onClick={userSignOut}>Sign Out</button>
+                    <p>{ `Увійшли як: ${authUser.email}`}</p>
+                    <button className="sign-out-btn" onClick={userSignOut}>Вийти з акаунта</button>
                 </div>
             ) : (
                 <div>
-                    <p>Signed Out</p>
+                    <p>Ви не увійшли в систему</p>
                 </div>
             )}
         </div>
